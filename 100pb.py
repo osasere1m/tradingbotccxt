@@ -1,3 +1,6 @@
+#20 and 50 ema pullback with stochastic rsi trading strategy- long only
+
+
 import ccxt
 import pandas as pd
 import pandas_ta as ta
@@ -32,7 +35,7 @@ get_balance()
 symbol = 'LTC/USDT'
 amount = 0.2 #size
 type = 'market'
-timeframe = '15m'
+timeframe = '5m'
 limit = 200
 ohlcv = bybit.fetch_ohlcv(symbol, timeframe)
 
@@ -42,8 +45,11 @@ df['Timestamp'] = pd.to_datetime(df['Timestamp'], unit='ms')
 df.set_index('Timestamp', inplace=True)
 print(df)
 # Step 5: Calculate technical indicators
-df.ta.ema(length=200, append=True)
+df.ta.ema(length=20, append=True)
+df.ta.ema(length=50, append=True)
 df.ta.ema(length=100, append=True)
+df.ta.ema(length=150, append=True)
+df.ta.ema(length=200, append=True)
 df.ta.stochrsi(length=14, append=True)
 
 print(df)
@@ -56,7 +62,7 @@ def trading_bot(df):
 
     # Step 6: Implement the trading strategy
     for i, row in df.iterrows():
-        if df["Close"].iloc[-1] < df["EMA_100"].iloc[-1] and df["Close"].iloc[-1] > df["EMA_200"].iloc[-1] and df["STOCHRSIk_14_14_3_3"].iloc[-1] < 0.15:
+        if (df["Close"].iloc[-1] < df["EMA_50"].iloc[-1]and df["Close"].iloc[-1] > df["EMA_100"].iloc[-1] and df["Close"].iloc[-1] > df["EMA_200"].iloc[-1] and df["STOCHRSIk_14_14_3_3"].iloc[-1] < 20 and ta.crossover(df["STOCHRSIk_14_14_3_3"],  ["STOCHRSId_14_14_3_3"])) or (df["Close"].iloc[-1] < df["EMA_20"].iloc[-1]and df["Close"].iloc[-1] > df["EMA_50"].iloc[-1]and df["Close"].iloc[-1] > df["EMA_100"].iloc[-1] and df["Close"].iloc[-1] > df["EMA_200"].iloc[-1] and df["STOCHRSIk_14_14_3_3"].iloc[-1] < 20 and ta.crossover(df["STOCHRSIk_14_14_3_3"],  ["STOCHRSId_14_14_3_3"])):
             print(f"long signal found")
             if positions is None:
                 # Place a buy limit order with stop loss and take profit orders
@@ -69,15 +75,7 @@ def trading_bot(df):
             # Check if there is an open trade position
             # If there is no open position, place a limit order to enter the trade at the current market price
             #pass
-        elif df["Close"].iloc[-1] > df["EMA_100"].iloc[-1] and df["Close"].iloc[-1] < df["EMA_200"].iloc[-1] and df["STOCHRSIk_14_14_3_3"].iloc[-1] < 0.85:
-            print(f"Short signal found")
-            if positions is None:
-                # Place a buy limit order with stop loss and take profit orders
-                order = bybit.create_contract_v3_order(symbol, type, 'sell', amount)
-                
-                print(f"Short order placed: {order}")
-            else:
-                print(f"There is already an open position: {positions}")
+        
         else:
             print(f"checking for signal")
             continue
@@ -101,36 +99,23 @@ def trading_bot(df):
                 
                 print(f"{pnl} percent")
 
-                if position['side'] =='short':
-                    if positions and df["STOCHRSIk_14_14_3_3"].iloc[-1] > 0.85:
+                if position['side'] =='long':
+                    if positions and df["STOCHRSIk_14_14_3_3"].iloc[-1] > 85:
                         # Place a market sell order to close the trade
                         order = bybit.create_contract_v3_order(symbol, type, 'sell', amount)
                             
                         print(f"Exit signal order placed: {order}")
-                    
-                    else: 
-                        pnl <= -5 or pnl >= 10
-                        print(f"Closing position for {symbol} with PnL: {pnl}%")
-                        side = 'buy'
-                        #order= bybit.cancel_derivatives_order(ids, symbol)
-                        order = bybit.create_contract_v3_order(symbol, type, side, amount)
-                        if order:
-                            print(f"Position closed: {order} with PnL: {pnl}%")
-                else:
-                    if positions and df["STOCHRSIk_14_14_3_3"].iloc[-1] < 20:
-                        # Place a market sell order to close the trade
-                        order = bybit.create_contract_v3_order(symbol, type, 'buy', amount)
-                            
-                        print(f"Exit signal order placed: {order}")
                         pass
                     else:
-                        pnl <= -5 or pnl >= 10
+                        pnl <= -5 or pnl >= 30
                         print(f"Closing position for {symbol} with PnL: {pnl}%")
-                        side = 'buy'
+                        side = 'sell'
                         order = bybit.create_contract_v3_order(symbol, type, side, amount)
                         if order:
                             print(f"Position closed: {order} with PnL: {pnl}%")
                 
+                
+                                    
 
 
                 
