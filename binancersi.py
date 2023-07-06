@@ -13,35 +13,27 @@ import schedule
 
 # Step 2: Set up the exchange connection
 
-import os
-from dotenv import load_dotenv
 
-load_dotenv()
-api_key = os.getenv('BINANCE_API_KEY')
-secret_key = os.getenv('BINANCE_SECRET_KEY')
 
-binance = ccxt.binance({
-    'apiKey': api_key,
-    'secret': secret_key,
+bybit = ccxt.bybit({
+    'apiKey': '',
+    'secret': '',
     'enableRateLimit': True,
-    'options': {
-        'defaultType': 'future',
-        'adjustForTimeDifference': True
-    }
+     
+
 })
+#bybit future contract enable
+bybit.options["dafaultType"] = 'future'
+bybit.load_markets()
 
-
-#binance future contract enable
-#binance.options["dafaultType"] = 'future'
-#binance.load_markets()
 def load_markets():
    
     # Load market data 
-    market = binance.load_markets()
+    market = bybit.load_markets()
     
 
     # Fetch account balance
-    balance_info = binance.fetch_balance()
+    balance_info = bybit.fetch_balance()
     print(balance_info)
     #time delay
     time.sleep (10)
@@ -58,7 +50,7 @@ amount = 0.1
 type = 'market'
 timeframe = '5m'
 limit = 200
-ohlcv = binance.fetch_ohlcv(symbol, timeframe)
+ohlcv = bybit.fetch_ohlcv(symbol, timeframe)
 
 # Convert the data into a pandas DataFrame for easy manipulation
 df = pd.DataFrame(ohlcv, columns=['Timestamp', 'Open', 'High', 'Low', 'Close', 'Volume'])
@@ -84,7 +76,7 @@ print(df)
 
 
 def trading_bot(df):
-    positions = binance.fetch_positions()
+    positions = bybit.fetch_positions()
     global position
 
     # Step 6: Implement the trading strategy
@@ -95,8 +87,8 @@ def trading_bot(df):
             
             if positions is None:
                 # Place a buy limit order with stop loss and take profit orders
-                #order = bybit.create_contract_v3_order(symbol, type, 'buy', amount)
-                order = binance.create_order(symbol,type, 'buy', amount)
+                order = bybit.create_contract_v3_order(symbol, type, 'buy', amount)
+                #order = binance.create_order(symbol,type, 'buy', amount)
                 
                 print(f"long order placed: {order}")
                 time.sleep(20)
@@ -134,8 +126,8 @@ def trading_bot(df):
                 if position['side'] =='long':
                     if positions and (df["High"].iloc[-1] > df["EMA_20"] or df["RSI_14"].iloc[-1] > 50) or (df["Close"].iloc[-1] < df["EMA_50"] and df["Close"].iloc[-1] > df["EMA_200"] and df["STOCHRSIk_14_14_3_3"] < 18 and ta.crossover(df["STOCHRSIk_14_14_3_3"],  ["STOCHRSId_14_14_3_3"])):
                         # Place a market sell order to close the trade
-                        #order = bybit.create_contract_v3_order(symbol, type, 'buy', amount)
-                        order = binance.create_order
+                        order = bybit.create_contract_v3_order(symbol, type, 'buy', amount)
+                        #order = binance.create_order
                         (symbol, type, 'sell', amount)
                             
                         print(f"Exit signal order placed: {order}")
@@ -146,9 +138,8 @@ def trading_bot(df):
                         pnl <= -5 or pnl >= 10
                         print(f"Closing position for {symbol} with PnL: {pnl}%")
                         side = 'sell'
-                        #order = bybit.create_contract_v3_order(symbol, type, side, amount)
-                        order = binance.create_order
-                        (symbol, type, 'sell', amount)
+                        order = bybit.create_contract_v3_order(symbol, type, side, amount)
+                        #order = binance.create_order(symbol, type, 'sell', amount)
                         if order:
                             print(f"Position closed: {order} with PnL: {pnl}%")
                         time.sleep(300)
