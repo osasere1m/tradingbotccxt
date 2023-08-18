@@ -1,0 +1,47 @@
+import ccxt
+import pandas as pd
+import schedule
+import time
+
+# Initialize KuCoin client
+exchange = ccxt.kucoin()
+
+# List to store tokens to buy
+tokens_to_buy = []
+
+# Scanning logic
+def scan_market():
+    # Fetch all tickers
+    markets = exchange.load_markets()
+    tickers = exchange.fetch_tickers()
+
+    # Clear previous tokens to buy
+    tokens_to_buy.clear()
+
+    # Scanning logic
+    for symbol, ticker in tickers.items():
+        if symbol.endswith('/USDT'):  # Filter for USDT pairs
+            close_price = ticker['close']
+            ema_20 = ticker['info']['ema']
+            ema_50 = ticker['info']['ema50']
+            adx_14 = ticker['info']['adx14']
+
+            if (close_price > ema_50) and (close_price < ema_20) and (ema_20 < ema_50) and (adx_14 > 25) and (close_price <= 1):
+                tokens_to_buy.append(symbol)
+
+    # Save tokens to buy to a CSV file
+    df = pd.DataFrame(tokens_to_buy, columns=['Tokens'])
+    df.to_csv('tokens_to_buy.csv', index=False)
+
+    print("Tokens to buy saved to tokens_to_buy.csv")
+
+# Schedule the scanning logic to run every 10 minutes
+schedule.every(10).minutes.do(scan_market)
+
+# Run the scanning logic immediately
+scan_market()
+
+# Keep the script running
+while True:
+    schedule.run_pending()
+    time.sleep(1)

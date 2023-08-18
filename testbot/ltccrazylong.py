@@ -10,14 +10,16 @@ import schedule
 # Step 1: Import the necessary libraries
 
 # Step 2: Set up the exchange connection
-"""""
+
 import os
 from dotenv import load_dotenv
 
 load_dotenv()
 api_key = os.getenv('BINANCE_API_KEY')
 secret_key = os.getenv('BINANCE_SECRET_KEY')
-
+api_key = os.getenv('BYBIT_API_KEY')
+secret_key = os.getenv('BYBIT_SECRET_KEY')
+"""""
 exchange = ccxt.binance({
     'apiKey': api_key,
     'secret': secret_key,
@@ -33,14 +35,28 @@ exchange = ccxt.binance({
 """""
 
 bybit = ccxt.bybit({
-    'apiKey': 'hqJUUDzYg1RMoQLtWq',
-    'secret': 'NAquXITuPMhY3RVwGv88UsNtswn8BktrbIBA',
+    'apiKey': '',
+    'secret': '',
     'enableRateLimit': True,
-    'test': True,  # required by Bybit
+    'options': {
+        'defaultType': 'future',
+        'adjustForTimeDifference': True
+    }
 
 })
 
-bybit.set_sandbox_mode(True) # activates testnet mode
+bybit = ccxt.bybit({
+    'apiKey': '',
+    'secret': '',
+    'enableRateLimit': True,
+    'options': {
+        'defaultType': 'future',
+        'adjustForTimeDifference': True
+    }
+
+})
+
+#bybit.set_sandbox_mode(True) # activates testnet mode
 #bybit future contract enable
 bybit.options["dafaultType"] = 'future'
 bybit.load_markets()
@@ -57,7 +73,7 @@ get_balance()
 symbol = 'LTC/USDT'
 amount = 0.1 
 type = 'market'
-timeframe = '1h'
+timeframe = '15m'
 limit = 200
 ohlcv = bybit.fetch_ohlcv(symbol, timeframe)
 
@@ -82,8 +98,10 @@ df.ta.stochrsi(length=14, append=True)
 
 print(df)
 # Define the conditions for short and long trades
-short_condition = (df["Close"] < df["EMA_50"]) & (df["Close"] > df["EMA_20"]) or (df["High"] > df["EMA_20"]) & (df["STOCHRSIk_14_14_3_3"] > 85) & (df["ADX_14"] > 25)
-long_condition = (df["Close"] > df["EMA_50"]) & (df["Close"] < df["EMA_20"]) or (df["High"] > df["EMA_20"]) & (df["STOCHRSIk_14_14_3_3"] > 24) & (df["ADX_14"] > 25)
+# Define the conditions for short and long trades
+short_condition = ((df["Close"] < df["EMA_50"]) & (df["Close"] > df["EMA_20"])) | ((df["High"] > df["EMA_20"]) & (df["STOCHRSIk_14_14_3_3"] > 85) & (df["ADX_14"] > 20))
+long_condition = ((df["Close"] > df["EMA_50"]) & (df["Close"] < df["EMA_20"])) | ((df["High"] > df["EMA_20"]) & (df["STOCHRSIk_14_14_3_3"] > 24) & (df["ADX_14"] > 20))
+
 
 # Filter the DataFrame based on the conditions
 short_trades = df.loc[short_condition]
@@ -95,25 +113,26 @@ long_trades = df.loc[long_condition]
 def trading_bot(df):
     positions = bybit.fetch_positions(symbols=['LTC/USDT'])
     
-    if len(positions) == None:
+    if len(positions) == False:
     
         # Step 6: Implement the trading strategy
         for i, row in df.iterrows():
-            type = 'market'
-            symbol = 'LTC/USDT'
-            amount = 0.1
             
-            if not short_trades.empty:
+            if not long_trades.empty:
+                type = 'market'
+                symbol = 'LTC/USDT'
+                amount = 0.1
             
-                print(f"short signal found")
+            
+                print(f"long signal found")
                 
                 
                 # Place a buy limit order with stop loss and take profit orders
-                order = bybit.create_contract_v3_order(symbol, type, 'sell', amount)
+                order = bybit.create_contract_v3_order(symbol, type, 'buy', amount)
                 
-                print(f"short order placed: {order}")
+                print(f"long order placed: {order}")
                 time.sleep(200)
-        
+            
                     
                 # Step 7: Check for signals and execute trades
                 # Check if there is an open trade position
@@ -121,14 +140,14 @@ def trading_bot(df):
                 #pass
             else:
                 time.sleep(60)
-                print(f"checking for short signals")
+                print(f"checking for long signals")
                 continue 
                      
     else:
-        time.sleep(60)
+        time.sleep(200)
         print("There is already an open position.")
          
-    
+
 
         
                
