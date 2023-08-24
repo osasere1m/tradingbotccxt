@@ -18,7 +18,7 @@ bybit = ccxt.bybit({
         'adjustForTimeDifference': True
     }
 
-}
+})
 
 #bybit.set_sandbox_mode(True) # activates testnet mode
 #bybit future contract enable
@@ -80,6 +80,7 @@ schedule.every(20).seconds.do(kill_switch)
 while True:
     schedule.run_pending()
     time.sleep(20)
+
 """""
 def kill_switch():
     positions = bybit.fetch_positions()

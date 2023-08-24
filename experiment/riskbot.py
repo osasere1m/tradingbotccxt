@@ -18,7 +18,7 @@ bybit = ccxt.bybit({
         'adjustForTimeDifference': True
     }
 
-}
+})
 
 #bybit.set_sandbox_mode(True) # activates testnet mode
 #bybit future contract enable

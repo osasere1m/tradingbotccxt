@@ -83,7 +83,12 @@ kill_switch()
 
 
 
-
+#setting leverage
+response = bybit.user_post_leverage_save({
+    "symbol": market['id'],  # https://github.com/ccxt/ccxt/wiki/Manual#symbols-and-market-ids
+    "leverage": 10
+})
+print(f"{response}X leverage")
 
 
 
