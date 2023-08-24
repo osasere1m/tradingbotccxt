@@ -12,6 +12,7 @@ from dotenv import load_dotenv
 bybit = ccxt.bybit({
     'apiKey': '',
     'secret': '',
+    'rateLimit': 10000,
     'enableRateLimit': True,
     'options': {
         'defaultType': 'future',
