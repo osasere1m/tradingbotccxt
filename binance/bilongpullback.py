@@ -56,7 +56,6 @@ a = ta.adx(df['High'], df['Low'], df['Close'], length = 14)
 df = df.join(a)
 print(df)
 df.ta.rsi(length=14, append=True)
-df.ta.rsi(length=14, append=True)
 df.ta.ema(length=20, append=True)
 df.ta.ema(length=50, append=True)
 
@@ -80,7 +79,7 @@ long_trades = df.loc[long_condition]
 def trading_bot(df):
     positions = binance.fetch_positions(symbols=['LTC/USDT'])
     
-    if len(positions) == False:
+    if len(positions) == None:
     
         # Step 6: Implement the trading strategy
         for i, row in df.iterrows():

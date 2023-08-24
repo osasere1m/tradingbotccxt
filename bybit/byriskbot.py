@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 
 
 
-binance = ccxt.binance({
+bybit = ccxt.bybit({
     'apiKey': '',
     'secret': '',
     'enableRateLimit': True,
@@ -22,17 +22,18 @@ binance = ccxt.binance({
 
 #bybit.set_sandbox_mode(True) # activates testnet mode
 #bybit future contract enable
-
-binance.load_markets()
+bybit.options["dafaultType"] = 'future'
+bybit.load_markets()
 def get_balance():
     params ={'type':'swap', 'code':'USDT'}
-    account = binance.fetch_balance(params)['USDT']['total']
+    account = bybit.fetch_balance(params)['USDT']['total']
     print(account)
 get_balance()
+#stoploss
+
 
 def kill_switch():
-   
-    positions = binance.fetch_positions()
+    positions = bybit.fetch_positions()
     print(f"{positions}information")
     for position in positions:
         if abs(position['contracts']) > 0:
@@ -42,7 +43,7 @@ def kill_switch():
             amount = position['contracts']
             
             type = 'market'
-            orderbook = binance.fetch_l2_order_book(symbol)
+            orderbook = bybit.fetch_l2_order_book(symbol)
             price = orderbook['asks'][0][0]
             
             print(f"{symbol} and {entryPrice}, {amount}")
@@ -60,12 +61,12 @@ def kill_switch():
                 
                 if position['side'] == 'short':
                     side = 'buy'
-                    order = binance.create_order(symbol, type, side, amount)
+                    order = bybit.create_contract_v3_order(symbol, type, side, amount)
                     if order:
                         print(f"Position closed: {order}")
                 else:
                     side = 'sell'
-                    order = binance.create_order(symbol, type, side, amount)
+                    order = bybit.create_contract_v3_order(symbol, type, side, amount)
                     if order:
                         print(f"Position closed: {order}")
             elif pnl >= 5:
@@ -75,22 +76,21 @@ def kill_switch():
                 if position['side'] == 'short':
                     side = 'buy'
                     stop_price = currentprice * 0.94  # 6 below% above current price
-                    order = binance.create_order(symbol, type, side, amount, stop_price)
+                    order = bybit.create_contract_v3_order(symbol, type, side, amount, stop_price)
                     if order:
                         print(f"Trailing stop set: {order}")
                 else:
                     side = 'sell'
                     stop_price = currentprice * 0.94  # 6% below current price
-                    order = binance.create_order(symbol, type, side, amount, stop_price)
+                    order = bybit.create_contract_v3_order(symbol, type, side, amount, stop_price)
                     if order:
                         print(f"Trailing stop set: {order}")
 
 
 # Run the kill switch function
 kill_switch()
-schedule.every(20).seconds.do(kill_switch)
+schedule.every(1).minutes.do(kill_switch)
 
 while True:
     schedule.run_pending()
     time.sleep(20)
-
